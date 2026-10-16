@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steam AI Hunter</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+<div class="max-w-6xl mx-auto py-8 px-4">
+<h1 class="text-3xl font-bold text-gray-900 mb-6">Steam AI Hunter</h1>
+
+<div class="flex gap-3 mb-6">
+<button id="tab-all" onclick="filterGames('all')" class="px-5 py-2 rounded-lg font-medium transition bg-green-600 text-white shadow">Все игры</button>
+<button id="tab-discount" onclick="filterGames('discount')" class="px-5 py-2 rounded-lg font-medium transition bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm">Со скидками</button>
+</div>
+
+<div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+</div>
+<script>
+let games = [];
+const verdictColors = {
+  "Игра бесплатная! Забирай": "bg-green-100 text-green-800 border-green-200",
+  "Огромная скидка! Надо брать": "bg-green-100 text-green-800 border-green-200",
+  "Хорошая скидка, можно подумать": "bg-yellow-100 text-yellow-800 border-yellow-200",
+  "Жди распродажи, скидки нет": "bg-red-100 text-red-800 border-red-200",
+};
+
+function render(filter) {
+  const grid = document.getElementById("grid");
+  const filtered = filter === 'discount' ? games.filter(g => g.discount > 0) : games;
+  grid.innerHTML = filtered.map(g => `
+    <article class="border rounded-xl p-4 bg-white shadow-sm">
+      <h2 class="text-xl font-semibold text-gray-900 mb-1">${g.name}</h2>
+      <div class="text-gray-600 mb-2">AppID: ${g.appid}</div>
+      <div class="flex items-baseline gap-2 mb-3">
+        <span class="text-2xl font-bold text-gray-900">$${g.price.toFixed(2)}</span>
+        ${g.discount > 0 ? `<span class="text-green-600 font-bold">-${g.discount}%</span>` : `<span class="text-gray-400">без скидки</span>`}
+      </div>
+      <span class="inline-block px-3 py-1 rounded text-sm font-medium border ${verdictColors[g.verdict] || "bg-gray-100 text-gray-800 border-gray-200"}">${g.verdict}</span>
+    </article>
+  `).join("");
+
+  document.getElementById("tab-all").className = filter === 'all' ? "px-5 py-2 rounded-lg font-medium transition bg-green-600 text-white shadow" : "px-5 py-2 rounded-lg font-medium transition bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm";
+  document.getElementById("tab-discount").className = filter === 'discount' ? "px-5 py-2 rounded-lg font-medium transition bg-green-600 text-white shadow" : "px-5 py-2 rounded-lg font-medium transition bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm";
+}
+
+function filterGames(filter) {
+  render(filter);
+}
+
+fetch("../analyzed_games.json")
+  .then(r => r.json())
+  .then(data => {
+    games = data;
+    render("all");
+  })
+  .catch(() => {
+    document.getElementById("grid").innerHTML = `<p class="text-red-500">Не удалось загрузить analyzed_games.json</p>`;
+  });
+</script>
+</body>
+</html>
